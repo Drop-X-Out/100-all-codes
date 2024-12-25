@@ -1,0 +1,205 @@
+# **Step by step guide to create Voice to Text guide** 
+
+### **1\. Set Up a Next.js Project**
+
+Create a new Next.js project if you don’t have one:  
+bash  
+Copy code  
+`npx create-next-app@latest voice-to-text-app`  
+`cd voice-to-text-app`
+
+* 
+
+Install necessary dependencies:  
+bash  
+Copy code  
+`npm install framer-motion axios`
+
+![][image1]
+
+### **2\. Create the Home Component**
+
+* In the `pages/index.js` file, set up the main component for the app. Your component will handle voice-to-text input, translation, and task management.  
+* Copy the code you provided into the `index.js` file.
+
+### **3\. Setting Up Speech Recognition**
+
+* Use the `SpeechRecognition` API for converting speech into text. The `useEffect` hook in the code ensures the speech recognition starts when the user clicks the button.  
+* When the user speaks, the API captures chunks of speech and adds them to the `transcript`.  
+* By default, the language is set to Hindi (`hi-IN`), but you can modify it for other languages.
+
+### **4\. Translation Using OpenAI API (Backend API)**
+
+Create a simple translation API in your `pages/api/translate.js` to convert the Hindi transcript into English:  
+javascript  
+Copy code  
+`import { Configuration, OpenAIApi } from "openai";`
+
+`const configuration = new Configuration({`  
+  `apiKey: process.env.OPENAI_API_KEY,`  
+`});`  
+`const openai = new OpenAIApi(configuration);`
+
+`export default async function handler(req, res) {`  
+  `const { text } = req.body;`  
+  `try {`  
+    `const response = await openai.createCompletion({`  
+      `model: "text-davinci-003",`  
+      ``prompt: `Translate this Hindi text to English: ${text}`,``  
+      `max_tokens: 100,`  
+    `});`  
+    `const translatedText = response.data.choices[0].text.trim();`  
+    `res.status(200).json(translatedText);`  
+  `} catch (error) {`  
+    `console.error("Error with OpenAI translation:", error);`  
+    `res.status(500).json({ error: "Translation failed" });`  
+  `}`  
+`}`
+
+* 
+
+Ensure you have your OpenAI API key set up in an `.env` file:  
+makefile  
+Copy code  
+`OPENAI_API_KEY=your_openai_api_key_here`
+
+* 
+
+### **5\. Voice-to-Text Functionality**
+
+* The `useEffect` hook contains the logic for the speech recognition process. When the user clicks the "Start Listening" button, it triggers the recognition of speech.  
+* If the recognized language is Hindi (`hi-IN`), the app sends the transcript to the `/api/translate` endpoint to translate it into English using OpenAI.  
+* If the language is already in English, the app directly adds the task to the list.
+
+### **6\. Task Management**
+
+* The tasks are displayed on the right side of the screen in a scrollable list.  
+* You are using the `motion` component from `framer-motion` to add a smooth animation effect when new tasks are added.  
+* ![][image2]
+
+### **7\. Handle Listening State**
+
+* The `isListening` state controls whether the app is actively listening for user input.  
+* The app starts or stops listening based on the button click, toggling the state.
+
+### **8\. Styling the Application**
+
+You’ve added basic styling with Tailwind CSS for the layout and the components (buttons, tasks, etc.). Ensure Tailwind CSS is installed and configured:  
+bash  
+Copy code  
+`npm install -D tailwindcss postcss autoprefixer`  
+`npx tailwindcss init`
+
+* 
+
+In `tailwind.config.js`, add:  
+javascript  
+Copy code  
+`module.exports = {`  
+  `content: ["./pages/**/*.{js,ts,jsx,tsx}", "./components/**/*.{js,ts,jsx,tsx}"],`  
+  `theme: {`  
+    `extend: {},`  
+  `},`  
+  `plugins: [],`  
+`};`
+
+* 
+
+In `styles/globals.css`, import Tailwind CSS:  
+css  
+Copy code  
+`@tailwind base;`  
+`@tailwind components;`  
+`@tailwind utilities;`
+
+### **9\. Create the API Endpoint for Translation**
+
+##### In the `pages/api/translate.js` file, set up the OpenAI translation API: javascript Copy code `import { OpenAI } from "openai";`
+
+##### 
+
+##### export default async function handler(req, res) {
+
+#####   if (req.method \=== "POST") {
+
+#####     const { text } \= req.body;
+
+##### 
+
+#####     const openai \= new OpenAI({
+
+#####       apiKey: process.env.OPENAI\_API\_KEY,
+
+#####     });
+
+##### 
+
+#####     try {
+
+#####       // Send the text to GPT-3.5 Turbo for translation
+
+#####       const completion \= await openai.chat.completions.create({
+
+#####         messages: \[
+
+#####           {
+
+#####             role: "user",
+
+#####             content: \`Convert ${text} into English\`,
+
+#####           },
+
+#####         \],
+
+#####         model: "gpt-3.5-turbo",
+
+#####       });
+
+##### 
+
+#####       // Respond with the translated text
+
+#####       res.status(200).json(completion.choices\[0\].message.content);
+
+#####     } catch (error) {
+
+#####       console.error(error.message);
+
+#####       res.status(400).json({ error: error.message });
+
+#####     }
+
+#####   } else {
+
+#####     res.status(405).json({ error: "Method not allowed" });
+
+#####   }
+
+##### }
+
+* ##### 
+
+* ##### This API receives the transcript text (e.g., in Hindi), sends it to OpenAI for translation, and responds with the translated English text.
+
+### 
+
+### **10 . Running the Application**
+
+To run the application, use:  
+bash  
+Copy code  
+`npm run dev`
+
+* Open the application at http://localhost:3000. You should now be able to click the "Start Listening" button to begin recording tasks via voice input.
+
+### **11\. Testing the Application**
+
+* Test with various inputs in both Hindi and English. Say "Stop Recording" to stop the transcription.  
+* Add tasks dynamically based on your voice inputs, and verify the translation from Hindi to English.
+
+With this guide, you can easily create a voice-to-text Next.js application with OpenAI integration for translation and smooth task management.
+
+[image1]: <data:image/png;base64,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tX72+v5faN2v2lf9WTT3je7bPE7reNnrO3bMCfJ95e38+MnoHGi+tqOPuPP7TXtN6QchnT0h/RhDmiI1+Yq0/fVnq0V07fjkj8tD2tz3wML6If3rw3UAy23p972Dhc9X20dX12uHtLnv5HcfrK7s0s/yzH+1n39TiubCX708/DpdiT65//HqynQzIf3JtxZWtv/Z6u1TU1/nZx5aud/Cn49uD3/P+7nWvhferB/zwLOnqn0vDIN7YupxJz2nafvK2y/9ZXrO9ZXnyUPl1W47pNcvvty6cn1u/+hqf/nYU8XR1d/Lf+IPRm9CmtvoLiGdPSGdYUj7afyKdDvJr0grE65IYR4I6ewJqZDeZUIKsySksyekQgp0iJDOnpAKKdAhQjp7QiqkQIcI6ewJqZACHSKksyekQgp0iJDOnpAKKdAhQjp7QiqkQIcI6ewJqZACHSKksyekWwhpmnSyAmw3WxkhjRHSLYbUGGO6MkIaI6RCaozp+QhpjJAKqTGm5yOkMUIqpMaYno+QxgipkBpjej5CGiOkQmqM6fkIaUzvQtqMqZAaY0w7pGVEhXTjhFRIjTE9HyGN6XVIL1+5NjyBbt++nZ9XxhjTi0nrX1oH03oopFvT+ZAmeUybIX3v0pXi4rvvFTdufJCfX8YY0+lJ615a/9I6mIdURDeutyHNP9595+JysfTOxeLt80vFm2+9XZxdfLM48/PF4vU3fj50+vUzxenTbwz93+nXAbatcq1K61a5hqX1LK1raX1L61xa79K6l3+sK6Sb18uQ5lel6SR6d/nS8J3ZOxffLc5feGd4op17+8LwpEt+8ea5YvEXb1XSCQmw3TTXqbRulWtYWs/SupbWt7TOpfUurXtp/cuvRoV0c3oR0iSPafOqtIxp+ngjvTsrg5qkd20XlkbSCZhLJybAxy1fm5Jy7RpdfY7WtLS+pXUurXd5RF2Nbk1vQ7peTNM7tfIqdejicqU8IQG2o+Z6Va5h5Zq2XkSFdPN6E9JkvZjmQS2jWipPRIB50Fy/yjWtGVARvTN6FdKkeZKsFdQyqqV08gHMm+Y61lzf1gqoiG5O70Ka5CdMeSLlUc3DCjCvmutavubla2K+ZrK2XoY0yU+caVGdFFeAeZGvZdPiKaJb19uQlvKTaD35yQiwHeVr13rytZGN631Ic/nJBdBF+drH1gkpAAQIKQAECCkABAgpAAQIKQAECCkABAgpAAQIKQAECCkABAgpAAQIKQAECCkABAgpAAQIKQAECCkABAgpAAQIKQAECCkABAgpAAQIKQAECCkABAgpAAQIKQAECCkABAgpAAQIKQAECCkABAgpAAQIKQAECCkABAgpAAQIKQAECCkABAgpAAQIKQAECCkABAgpAAQIKQAECCkABAgpAAQIKQAECCkABAgpAAQIKQAECCkABAgpAAQIKQAECCkABAgpAAQIKQAECCkABAgpAAQIKQAECCkABAgpAAQIKQAECCkABAgpAAQIKQAECCkABAgpAAQIKQAECCkABAgpAAQIKQAECCkABAgpAAQIKQAE/D8oHqF106NK2wAAAABJRU5ErkJggg==>
+
+[image2]: <data:image/png;base64,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>
